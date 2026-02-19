@@ -1,5 +1,14 @@
 package com.ubam.proyecto_parcial1.Models;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import com.ubam.proyecto_parcial1.Controllers.auth.repository.Token;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,11 +16,21 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "tbl_ope_usuarios")
-public class Usuario {
+public class Usuario implements UserDetails {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "UsuarioId")
@@ -26,10 +45,10 @@ public class Usuario {
     @Column(name = "Usuario_ApellidoMat", nullable = false, length = 45)
     private String apellidoMaterno;
 
-    @Column(name = "Usuario_Email", nullable = false, length = 80)
+    @Column(name = "Usuario_Email", nullable = false, length = 80, unique = true)
     private String email;
 
-    @Column(name = "Usuario_Password", nullable = false, length = 45)
+    @Column(name = "Usuario_Password", nullable = false, length = 255) // BCrypt genera cadenas largas
     private String password;
 
     @ManyToOne
@@ -37,78 +56,50 @@ public class Usuario {
     private Rol rol;
 
     @Column(name = "Usuario_Activo", nullable = false)
-    private boolean activo;
+    private Boolean activo;
 
-    
+    @OneToMany(mappedBy = "usuario")
+    private List<Token> tokens;
 
-    public Usuario() {
+    // --- MÉTODOS OBLIGATORIOS DE USERDETAILS ---
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Retorna el rol del usuario para el control de acceso
+        // Se suele usar el prefijo "ROLE_" por convención de Spring
+        return List.of(new SimpleGrantedAuthority("ROLE_" + rol.getNombre()));
     }
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getApellidoPaterno() {
-        return apellidoPaterno;
-    }
-
-    public void setApellidoPaterno(String apellidoPaterno) {
-        this.apellidoPaterno = apellidoPaterno;
-    }
-
-    public String getApellidoMaterno() {
-        return apellidoMaterno;
-    }
-
-    public void setApellidoMaterno(String apellidoMaterno) {
-        this.apellidoMaterno = apellidoMaterno;
-    }
-
-    public String getEmail() {
+    @Override
+    public String getUsername() {
+        // En tu caso, el nombre de usuario para el login es el email
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
+    @Override
     public String getPassword() {
+        // Retorna la contraseña encriptada de la DB
         return password;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    @Override
+    public boolean isAccountNonExpired() {
+        return true; // Define si la cuenta ha expirado
     }
 
-    public Rol getRol() {
-        return rol;
+    @Override
+    public boolean isAccountNonLocked() {
+        return true; // Define si la cuenta está bloqueada
     }
 
-    public void setRol(Rol rol) {
-        this.rol = rol;
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true; // Define si las credenciales han expirado
     }
 
-    public boolean isActivo() {
+    @Override
+    public boolean isEnabled() {
+        // Usa tu campo 'activo' de la base de datos
         return activo;
     }
-
-    public void setActivo(boolean activo) {
-        this.activo = activo;
-    }
-
-    
-
-    // Getters y Setters
 }
