@@ -31,3 +31,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignorar configuraciones locales con contraseñas
+src/main/resources/application.properties
+
+# Archivos de compilación
+target/
+.mvn/
+*.class
+
+# Archivos de VS Code
+.vscode/
+.settings/
