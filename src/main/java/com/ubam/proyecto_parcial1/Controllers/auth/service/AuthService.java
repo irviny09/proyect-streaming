@@ -59,21 +59,7 @@ public class AuthService {
     }
 
     public TokenResponse login(LoginRequest request) {
-        // Autenticación contra MariaDB
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.email(), request.password())
-        );
-
-        var user = usuarioRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        var jwtToken = jwtService.generateToken(user);
-        var refreshToken = jwtService.generateRefreshToken(user);
-
-        revokeAllUserTokens(user);
-        saveUserToken(user, jwtToken);
-
-        return new TokenResponse(jwtToken, refreshToken);
+        return null;
     }
     public TokenResponse refreshToken(String authHeader) {
         // Lógica de refresh aquí

@@ -1,21 +1,20 @@
 package com.ubam.proyecto_parcial1.Controllers.config;
 
+
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-
-import com.ubam.proyecto_parcial1.Repository.UsuarioRepository;
-
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;import com.ubam.proyecto_parcial1.Models.Usuario;
+import com.ubam.proyecto_parcial1.Repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -29,11 +28,16 @@ public class AppConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return username -> repository.findByEmail(username)
-                .map(user -> (UserDetails) user) // Forzamos la conversión a UserDetails
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+    public UserDetailsService userDetailsService(){
+        return username -> {
+            final Usuario usuario = repository.findByEmail(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado")); 
+            return org.springframework.security.core.userdetails.User.builder()
+                    .username(usuario.getEmail())
+                    .password(usuario.getPassword())
+                    .roles(usuario.getRol().getNombre())
+                    .build();
+        };
     }
 
     
@@ -46,13 +50,13 @@ public class AppConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Soluciona el error 403
+            .csrf(csrf -> csrf.disable()) 
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll() // Soluciona el error 401
+                // ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ CORRECTA
+                .requestMatchers("/auth/**").permitAll() 
                 .anyRequest().authenticated()
-            )
-            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        
+            );
+
         return http.build();
     }
 }
