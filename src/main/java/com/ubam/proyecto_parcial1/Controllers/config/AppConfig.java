@@ -26,14 +26,16 @@ public class AppConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
     public UserDetailsService userDetailsService(){
         return username -> {
-            final Usuario usuario = repository.findByEmail(username)
+            Usuario usuario = repository.findByEmail(username)
                     .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado")); 
+            String nombreRol = usuario.getRol().getNombre();
             return org.springframework.security.core.userdetails.User.builder()
                     .username(usuario.getEmail())
                     .password(usuario.getPassword())
-                    .roles(usuario.getRol().getNombre())
+                    .authorities(nombreRol)
                     .build();
         };
     }

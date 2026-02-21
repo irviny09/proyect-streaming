@@ -7,7 +7,7 @@
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
 
 
     <!-- Google Font -->
@@ -31,11 +31,11 @@
             <h2 class="fw-bold mb-2">Bienvenido</h2>
             <p class="subtitle mb-4">Inicia sesión para continuar</p>
 
-            <form>
+            <form id="loginForm">
 
               <!-- Email -->
               <div class="form-floating mb-4">
-                <input type="usuario" id="usuario" class="form-control" placeholder="Usu">
+                <input type="usuario" id="email" class="form-control" placeholder="Usu">
                 <label for="text">Usuario</label>
               </div>
 
@@ -65,9 +65,7 @@
 
       <!-- IMAGEN -->
       <div class="col-lg-6 mb-5 mb-lg-0">
-        <img src="img/fondo.png"
-             class="w-100 rounded-4 shadow login-img"
-             alt="Imagen Login" />
+        <img th:src="@{/img/fondo.png}" alt="Imagen Login" class="w-100 rounded-4 shadow login-img">
       </div>
 
     </div>
@@ -77,6 +75,6 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-
+<script th:src="@{/js/login.js}"></script>
 </body>
 </html>
