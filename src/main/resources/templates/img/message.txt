@@ -1,0 +1,373 @@
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+-- -----------------------------------------------------
+-- Schema db_streaming
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema db_streaming
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `db_streaming` DEFAULT CHARACTER SET utf8mb3 ;
+USE `db_streaming` ;
+
+-- -----------------------------------------------------
+-- Table `db_streaming`.`tbl_cat_generos`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `db_streaming`.`tbl_cat_generos` (
+  `GeneroId` INT NOT NULL AUTO_INCREMENT,
+  `Genero_Genero` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`GeneroId`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 2
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `db_streaming`.`tbl_cat_roles`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `db_streaming`.`tbl_cat_roles` (
+  `RolId` INT NOT NULL AUTO_INCREMENT,
+  `Rol_Rol` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`RolId`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 3
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `db_streaming`.`tbl_ope_imagenes`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `db_streaming`.`tbl_ope_imagenes` (
+  `ImagenId` INT NOT NULL AUTO_INCREMENT,
+  `Imagen_Nombre` VARCHAR(45) NOT NULL,
+  `Imagen_URL` VARCHAR(200) NOT NULL,
+  PRIMARY KEY (`ImagenId`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 2
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `db_streaming`.`tbl_ope_logs`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `db_streaming`.`tbl_ope_logs` (
+  `LogId` INT NOT NULL AUTO_INCREMENT,
+  `Log_Descripcion` VARCHAR(200) NOT NULL,
+  `Log_Creacion` DATETIME NOT NULL,
+  PRIMARY KEY (`LogId`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 21
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `db_streaming`.`tbl_ope_peliculas`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `db_streaming`.`tbl_ope_peliculas` (
+  `PeliculaId` INT NOT NULL AUTO_INCREMENT,
+  `Pelicula_Nombre` VARCHAR(45) NOT NULL,
+  `Pelicula_Descripcion` TEXT NOT NULL,
+  `Pelicula_Activo` BIT(1) NOT NULL,
+  `Pelicula_ImagenId` INT NOT NULL,
+  `Pelicula_GeneroId` INT NOT NULL,
+  PRIMARY KEY (`PeliculaId`),
+  INDEX `Pelicula_GeneroId_idx` (`Pelicula_GeneroId` ASC) ,
+  INDEX `Pelicula_ImagenId_idx` (`Pelicula_ImagenId` ASC) ,
+  CONSTRAINT `Pelicula_GeneroId`
+    FOREIGN KEY (`Pelicula_GeneroId`)
+    REFERENCES `db_streaming`.`tbl_cat_generos` (`GeneroId`),
+  CONSTRAINT `Pelicula_ImagenId`
+    FOREIGN KEY (`Pelicula_ImagenId`)
+    REFERENCES `db_streaming`.`tbl_ope_imagenes` (`ImagenId`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 2
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `db_streaming`.`tbl_ope_usuarios`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `db_streaming`.`tbl_ope_usuarios` (
+  `UsuarioId` INT NOT NULL AUTO_INCREMENT,
+  `Usuario_Nombre` VARCHAR(45) NOT NULL,
+  `Usuario_ApellidoPat` VARCHAR(45) NOT NULL,
+  `Usuario_ApellidoMat` VARCHAR(45) NOT NULL,
+  `Usuario_Email` VARCHAR(80) NOT NULL,
+  `Usuario_Password` VARCHAR(45) NOT NULL,
+  `Usuario_RolId` INT NOT NULL,
+  `Usuario_Activo` BIT(1) NULL DEFAULT NULL,
+  PRIMARY KEY (`UsuarioId`),
+  INDEX `Usuario_RolId_idx` (`Usuario_RolId` ASC) ,
+  CONSTRAINT `Usuario_RolId`
+    FOREIGN KEY (`Usuario_RolId`)
+    REFERENCES `db_streaming`.`tbl_cat_roles` (`RolId`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 4
+DEFAULT CHARACTER SET = utf8mb3;
+
+USE `db_streaming` ;
+
+-- -----------------------------------------------------
+-- procedure sp_addNewMovie
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `db_streaming`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_addNewMovie`(
+	_nombre varchar(50),
+    _descripcion TEXT(500),
+    _activo bit(1),
+    _genero int,
+    _url varchar(200)
+)
+BEGIN
+
+	declare _imagenId int;
+    declare _peliculaId int;
+	insert into tbl_ope_imagenes 
+    values(
+		null,
+        _nombre,
+        _url
+    );
+    
+    set _imagenId = (select ImagenId from tbl_ope_imagenes order by ImagenId desc limit 1);
+    
+    insert into tbl_ope_peliculas 
+    values(
+		null,
+        _nombre,
+        _descripcion,
+        _activo,
+        _imagenId,
+        _genero
+    );
+    
+    set _peliculaId = (select PeliculaId from tbl_ope_peliculas order by PeliculaId desc limit 1);
+    
+    insert into tbl_ope_logs 
+    values(
+		null,
+        upper(concat("Se ingreso una nueva pelicula con ID: " , _peliculaId , " y imagen con ID: " , _imagenId)),
+        now()
+    );
+    
+    
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_addNewUser
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `db_streaming`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_addNewUser`(
+	_nombre varchar(40),
+    _apellidoP varchar(40),
+    _apellidoM varchar(40),
+    _email varchar(80),
+    _password varchar(80),
+    _rolId int,
+    _activo bit(1)
+)
+BEGIN
+	declare _usuarioId int;
+
+	insert into tbl_ope_usuarios 
+    values(
+		null,
+        _nombre,
+        _apellidoP,
+        _apellidoM,
+        _email,
+        _password,
+        _rolId,
+        _activo
+    );
+    
+    set _usuarioId = (select UsuarioId from tbl_ope_usuarios order by UsuarioId desc limit 1);
+    
+    insert into tbl_ope_logs 
+    values(
+		null,
+        upper(concat("Se ingreso un nuevo usuario con el ID: " , _usuarioId)),
+        now()
+    );
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_deleteUserById
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `db_streaming`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_deleteUserById`(
+	_usuarioId int
+)
+BEGIN
+	delete from tbl_ope_usuarios where UsuarioId = _usuarioId;
+    
+    insert into tbl_ope_logs 
+    values(
+		null,
+        upper(concat("Se borro el usuario con ID: " , _usuarioId)),
+        now()
+    );
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_showAMovieById
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `db_streaming`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_showAMovieById`(
+	_peliculaId int
+)
+BEGIN
+	select 
+	p.Pelicula_Nombre,
+	p.Pelicula_Descripcion,
+	p.Pelicula_Activo,
+	g.Genero_Genero,
+	i.Imagen_Nombre,
+	i.Imagen_URL
+	from tbl_ope_peliculas p
+	inner join tbl_cat_generos g
+	on p.Pelicula_GeneroId = g.GeneroId
+	inner join tbl_ope_imagenes i
+	on p.Pelicula_ImagenId = i.ImagenId
+    where p.PeliculaId = _peliculaId;
+    
+    insert into tbl_ope_logs 
+    values(
+		null,
+        upper(concat("Se mostro una pelicula con ID: " , _peliculaId)),
+        now()
+    );
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_showAllMovie
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `db_streaming`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_showAllMovie`()
+BEGIN
+	select 
+	p.Pelicula_Nombre,
+	p.Pelicula_Descripcion,
+	p.Pelicula_Activo,
+	g.Genero_Genero,
+	i.Imagen_Nombre,
+	i.Imagen_URL
+	from tbl_ope_peliculas p
+	inner join tbl_cat_generos g
+	on p.Pelicula_GeneroId = g.GeneroId
+	inner join tbl_ope_imagenes i
+	on p.Pelicula_ImagenId = i.ImagenId;
+    
+    insert into tbl_ope_logs 
+    values(
+		null,
+        upper("Se mostraron todas las peliculas"),
+        now()
+    );
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_showAllUser
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `db_streaming`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_showAllUser`()
+BEGIN
+
+	select 
+	concat(u.Usuario_Nombre , " " , u.Usuario_ApellidoPat , " " , u.Usuario_ApellidoMat) as Usuario,
+	u.Usuario_Email,
+	u.Usuario_Password,
+    u.Usuario_Activo,
+	r.Rol_Rol
+	from tbl_ope_usuarios u
+	inner join tbl_cat_roles r
+	on u.Usuario_RolId = r.RolId
+	where r.RolId = 2;
+    
+	insert into tbl_ope_logs values(
+		null,
+        upper("Se mostraron todos los usuarios"),
+        now()
+    );
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_updateActiveById
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `db_streaming`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_updateActiveById`(
+	_peliculaId int,
+    _activo bit(1)
+)
+BEGIN
+	update tbl_ope_peliculas set Pelicula_Activo = _activo where peliculaId = _peliculaId;
+    
+    insert into tbl_ope_logs 
+    values(
+		null,
+        upper(concat("Se modifico la disponibilidad de la pelicula con ID: " , _peliculaId , " Se actualizo con disponibilidad: " , _activo)),
+        now()
+    );
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure sp_updateActiveUserById
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `db_streaming`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_updateActiveUserById`(
+	_usuarioId int,
+    _activo bit(1)
+)
+BEGIN
+	update tbl_ope_usuarios set Usuario_Activo = _activo where UsuarioId = _usuarioId;
+    
+    insert into tbl_ope_logs 
+    values(
+		null,
+        upper(concat("Se cambio el estado de un usuario con ID: " , _usuarioId , " se cambio su estatus a: " , _activo)),
+        now()
+    );
+END$$
+
+DELIMITER ;
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
