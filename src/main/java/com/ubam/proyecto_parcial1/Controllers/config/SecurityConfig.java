@@ -10,11 +10,17 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
-import org.springframework.http.HttpHeaders;
+import java.util.Arrays;
 
-import com.ubam.proyecto_parcial1.Controllers.auth.repository.Token;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+
 import com.ubam.proyecto_parcial1.Controllers.auth.repository.TokenRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -30,25 +36,34 @@ public class SecurityConfig {
     private final TokenRepository tokenRepository;
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("*")); // En producción pon tu dominio real
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable) 
             .authorizeHttpRequests(req ->
-                req.requestMatchers("/auth/**",           
-                                    "/",                  
-                                    "/index.html",
-                                    "/registro",          
-                                    "/registro.html",
-                                    "/admin",             
-                                    "/cliente",           
-                                    "/css/**",            
-                                    "/img/**",            
-                                    "/js/**"              
-                    ).permitAll()
+                req.requestMatchers("/auth/**","/", "/index.html" , "/css/**", "/js/**", "/img/**").permitAll()    
+
+                    .requestMatchers(HttpMethod.GET, "/api/operacional/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/operacional/**").hasAuthority("ROLE_ADMIN")
+
+                    .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+                    .requestMatchers("/user/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                     .anyRequest()
                     .authenticated()
+                    
             )
-            
+            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
             .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -66,16 +81,16 @@ public class SecurityConfig {
         return http.build();
     }
 
-    private void logout(final String token){
-        if(token != null || !token.startsWith("Bearer ")){
-            throw new IllegalArgumentException("Token invalido");
-        }
+    private void logout(final String token) {
+    if (token == null || !token.startsWith("Bearer ")) {
+        return;
+    }
 
-        final String jwtToken = token.substring(7);
-        final Token foundToken = tokenRepository.findByToken(jwtToken)
-                .orElseThrow(() -> new IllegalArgumentException("Token invalido"));
+    final String jwtToken = token.substring(7);
+    tokenRepository.findByToken(jwtToken).ifPresent(foundToken -> {
         foundToken.setExpired(true);
         foundToken.setRevoked(true);
         tokenRepository.save(foundToken);
-    }
+    });
+}
 }

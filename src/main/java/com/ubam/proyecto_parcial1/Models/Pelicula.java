@@ -37,6 +37,9 @@ public class Pelicula {
     @JoinColumn(name = "Pelicula_GeneroId", nullable = false)
     private Genero genero;
 
+    @Column(name = "Pelicula_Trailer", length = 500)
+    private String trailerURL;
+
     
 
     public Pelicula() {

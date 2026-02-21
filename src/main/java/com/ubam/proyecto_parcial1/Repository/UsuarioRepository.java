@@ -23,7 +23,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
         @Param("_email") String email,
         @Param("_password") String password,
         @Param("_rolId") Integer rolId,
-        @Param("_activo") Boolean activo
+        @Param("_activo") Boolean activo,
+        @Param("_token") String token
     );
 
     @Query(value = "CALL sp_showAllUser()" , nativeQuery = true)
@@ -41,4 +42,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     void deleteUserById(@Param("_usuarioId") Integer usuarioId);
 
     Optional<Usuario> findByEmail(String email);
+
+    Optional<Usuario> findByUsuarioTokenVerificacion(String token);
+
 }

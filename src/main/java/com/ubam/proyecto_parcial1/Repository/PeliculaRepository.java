@@ -20,7 +20,8 @@ public interface PeliculaRepository extends JpaRepository<Pelicula, Integer> {
         @Param("_descripcion") String descripcion,
         @Param("_activo") Boolean activo,
         @Param("_genero") Integer generoId,
-        @Param("url") String url
+        @Param("url") String url,
+        @Param("_trailerURL") String trailerURL
     );
 
     @Query(value = "call sp_showAllMovie()" , nativeQuery = true)
