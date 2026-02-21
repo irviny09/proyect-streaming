@@ -36,7 +36,8 @@ public class MovieController {
         @RequestParam("descripcion") String descripcion,
         @RequestParam("activo") Boolean activo,
         @RequestParam("generoId") Integer generoId,
-        @RequestParam("archivo") MultipartFile archivo
+        @RequestParam("archivo") MultipartFile archivo,
+        @RequestParam("trailerURL") String trailerURL
     ){
         try{
             String rutaCarpeta = System.getProperty("user.dir") + "/src/main/resources/static/uploads/";
@@ -50,7 +51,7 @@ public class MovieController {
 
             String urlImagen = "/uploads/" + nombreArchivo;
 
-            peliculaRepository.addNewMovie(nombre, descripcion, activo, generoId, urlImagen);
+            peliculaRepository.addNewMovie(nombre, descripcion, activo, generoId, urlImagen, trailerURL);
             return "Pelicula registrada exitosamente";
         } catch (Exception e) {
             return "Error al registrar la pelicula: " + e.getMessage();

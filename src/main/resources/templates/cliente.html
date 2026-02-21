@@ -6,12 +6,9 @@
 <title>Plataforma Streaming</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" th:href="@{/css/patroncito.css}">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/patroncito.css}">
 
-<style>
-
-</style>
 </head>
 
 <body>
@@ -29,7 +26,7 @@
     <div class="table-container">
 
         <div class="table-responsive">
-            <table class="table align-middle text-center">
+            <table id="movieBody" class="table align-middle text-center">
                 <thead>
                     <tr>
                         <th>Imagen</th>
@@ -75,6 +72,27 @@
     © 2026 XXPELICULAS - Todos los derechos reservados
 </footer>
 
+<div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="trailerTitle">Ver Tráiler</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="ratio ratio-16x9">
+            <iframe id="trailerVideo" 
+                    src="" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+            </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/cliente.js}"></script>
 </body>
 </html>

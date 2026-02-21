@@ -66,6 +66,7 @@ async function registrarPeliculas(event) {
     formData.append("descripcion", document.getElementById("descripcion").value);
     formData.append("activo", true);
     formData.append("generoId", document.getElementById("genero").value);
+    formData.append("trailerURL", document.getElementById("trailerURL").value);
 
     const inputImagen = document.getElementById("url"); 
     if (inputImagen.files.length > 0) {
