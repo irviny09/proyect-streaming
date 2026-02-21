@@ -34,11 +34,21 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable) 
             .authorizeHttpRequests(req ->
-                req.requestMatchers("/auth/**")
-                    .permitAll()
+                req.requestMatchers("/auth/**",           
+                                    "/",                  
+                                    "/index.html",
+                                    "/registro",          
+                                    "/registro.html",
+                                    "/admin",             
+                                    "/cliente",           
+                                    "/css/**",            
+                                    "/img/**",            
+                                    "/js/**"              
+                    ).permitAll()
                     .anyRequest()
                     .authenticated()
             )
+            
             .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -50,6 +60,7 @@ public class SecurityConfig {
                         })
                         .logoutSuccessHandler((request, response, authentication) ->
                             SecurityContextHolder.clearContext())
+                        
             );
 
         return http.build();
