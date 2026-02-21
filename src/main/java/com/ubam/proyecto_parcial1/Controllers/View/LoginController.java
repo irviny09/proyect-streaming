@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 
 
+
 @Controller
 public class LoginController {
     
@@ -17,6 +18,12 @@ public class LoginController {
     public String index() {
         return "redirect:/index";
     }
+
+    @GetMapping("/admin")
+    public String admin() {
+        return "admin";
+    }
+    
     
     
 }

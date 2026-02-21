@@ -1,0 +1,58 @@
+/* FUENTE */
+body {
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* FONDO DIFUMINADO */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+  background: url("../img/bak.png") center/cover no-repeat;
+    animation: zoomBackground 5s ease-in-out infinite alternate;
+    z-index: -2;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.3);
+    z-index: -1;
+}
+
+/* ANIMACIÓN */
+@keyframes zoomBackground {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+}
+
+/* CARD */
+.auth-card {
+    border: none;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+}
+
+/* INPUTS */
+.form-control {
+    border-radius: 12px;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+}
+
+/* BOTÓN */
+.btn-primary {
+    border-radius: 12px;
+    font-weight: 500;
+    transition: 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+}
