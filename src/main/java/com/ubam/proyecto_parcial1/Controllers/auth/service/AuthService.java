@@ -126,4 +126,18 @@ public class AuthService {
         });
         tokenRepository.saveAll(validUserTokens);
     }
+
+    public void logout(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return;
+        }
+        final String jwt = authHeader.substring(7);
+        // Aquí podrías buscar el token en tu tabla de 'tokens' y marcarlo como expirado/revocado
+        var storedToken = tokenRepository.findByToken(jwt).orElse(null);
+        if (storedToken != null) {
+            storedToken.setExpired(true);
+            storedToken.setRevoked(true);
+            tokenRepository.save(storedToken);
+        }
+    }
 }

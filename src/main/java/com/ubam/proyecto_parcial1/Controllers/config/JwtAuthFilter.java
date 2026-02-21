@@ -32,17 +32,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final TokenRepository tokenRepository;
     private final UsuarioRepository usuarioRepository;
 
-
     @Override
-protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-    String path = request.getServletPath();
-    // Agregamos /js/ e /img/ para que las vistas carguen sus recursos sin problemas
-    return path.equals("/") || 
-           path.startsWith("/auth/") || 
-           path.startsWith("/css/") || 
-           path.startsWith("/js/") || 
-           path.startsWith("/img/");
-}
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        // Rutas que el filtro ignorará por completo
+        return path.equals("/") || 
+               path.startsWith("/auth/") || 
+               path.startsWith("/css/") || 
+               path.startsWith("/js/") || 
+               path.startsWith("/img/");
+    }
 
     @Override
     protected void doFilterInternal(
@@ -51,30 +50,25 @@ protected boolean shouldNotFilter(HttpServletRequest request) throws ServletExce
         @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        if (request.getServletPath().contains("/auth/verify")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        // 1. Eliminar validaciones manuales de path aquí si ya usas shouldNotFilter
+        
         String jwtToken = null;
         String userEmail = null;
 
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (request.getServletPath().contains("/auth")) {
-        filterChain.doFilter(request, response);
-        return;
-        }
-
+        // 2. Extracción de Token (Header o Cookie)
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwtToken = authHeader.substring(7);
-        }else if (request.getCookies() != null) {
-            for(Cookie cookie : request.getCookies()) {
-                if("access_token".equals(cookie.getName())){
+        } else if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("access_token".equals(cookie.getName())) {
                     jwtToken = cookie.getValue();
                 }
             }
         }
 
+        // Si no hay token, simplemente seguimos a la siguiente cadena de filtros
         if (jwtToken == null) {
             filterChain.doFilter(request, response);
             return;
@@ -82,31 +76,31 @@ protected boolean shouldNotFilter(HttpServletRequest request) throws ServletExce
 
         try {
             userEmail = jwtService.extractUsername(jwtToken);
-        } catch (Exception e) {
-            // Si el token está mal formado o hay error al extraer, seguimos
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // Validar si tenemos email y el usuario no está ya autenticado
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
             
-            // Verificar en la base de datos si el token no ha sido revocado o ha expirado
-            var isTokenValidInDb = tokenRepository.findByToken(jwtToken)
-                    .map(t -> !t.isExpired() && !t.isRevoked())
-                    .orElse(false);
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                
+                // 3. Validación crucial: Token no revocado en BD y estado del usuario
+                var isTokenValidInDb = tokenRepository.findByToken(jwtToken)
+                        .map(t -> !t.isExpired() && !t.isRevoked())
+                        .orElse(false);
 
-            var usuario = usuarioRepository.findByEmail(userEmail).orElse(null);
-            if (usuario != null && jwtService.isTokenValid(jwtToken, usuario) && isTokenValidInDb) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities() 
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                var usuario = usuarioRepository.findByEmail(userEmail).orElse(null);
+
+                if (usuario != null && usuario.isVerificado() && 
+                    jwtService.isTokenValid(jwtToken, usuario) && isTokenValidInDb) {
+                    
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities() 
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (Exception e) {
+            // Loguear el error si es necesario
         }
 
         filterChain.doFilter(request, response);
