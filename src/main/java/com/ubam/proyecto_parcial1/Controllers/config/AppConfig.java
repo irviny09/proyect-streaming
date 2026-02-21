@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,15 +28,22 @@ public class AppConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(){
+    public UserDetailsService userDetailsService() {
         return username -> {
             Usuario usuario = repository.findByEmail(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado")); 
+                    .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+            if (!usuario.isVerificado()) {
+                throw new DisabledException("Cuenta no verificada. Por favor, revisa tu correo electrónico.");
+            }
+
             String nombreRol = usuario.getRol().getNombre();
+
             return org.springframework.security.core.userdetails.User.builder()
                     .username(usuario.getEmail())
                     .password(usuario.getPassword())
                     .authorities(nombreRol)
+                    .disabled(!usuario.isVerificado()) // Sincroniza el estado con el builder
                     .build();
         };
     }

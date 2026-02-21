@@ -62,55 +62,61 @@ public class Usuario implements UserDetails {
     private List<Token> tokens;
 
     @Column(name = "Usuario_TokenVerificacion", length = 100)
-    private String tokenVerificacion;
+    private String usuarioTokenVerificacion;
+
+    @Column(name = "verificado")
+    private boolean verificado;
 
     // --- MÉTODOS OBLIGATORIOS DE USERDETAILS ---
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Retorna el rol del usuario para el control de acceso
-        // Se suele usar el prefijo "ROLE_" por convención de Spring
         return List.of(new SimpleGrantedAuthority("ROLE_" + rol.getNombre()));
     }
 
     @Override
     public String getUsername() {
-        // En tu caso, el nombre de usuario para el login es el email
         return email;
     }
 
     @Override
     public String getPassword() {
-        // Retorna la contraseña encriptada de la DB
         return password;
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Define si la cuenta ha expirado
+        return true; 
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Define si la cuenta está bloqueada
+        return true; 
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Define si las credenciales han expirado
+        return true; 
     }
 
     @Override
     public boolean isEnabled() {
-        // Usa tu campo 'activo' de la base de datos
+      
         return activo;
     }
 
-    public boolean isVerificado(boolean verificado){
+    public boolean isVerificado() {
         return verificado;
     }
 
-    public void setVerificado(boolean verificado){
-        this.activo = verificado;
+    public void setVerificado(boolean verificado) {
+        this.verificado = verificado;
+    }
+    public String getUsuarioTokenVerificacion() {
+        return usuarioTokenVerificacion;
+    }
+
+    public void setUsuarioTokenVerificacion(String usuarioTokenVerificacion) {
+        this.usuarioTokenVerificacion = usuarioTokenVerificacion;
     }
 }

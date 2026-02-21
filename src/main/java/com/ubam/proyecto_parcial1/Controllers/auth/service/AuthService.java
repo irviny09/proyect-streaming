@@ -1,5 +1,10 @@
 package com.ubam.proyecto_parcial1.Controllers.auth.service;
 
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,34 +32,35 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JavaMailSender mailSender;
     
 
     public TokenResponse register(RegisterRequest request) {
-        if (usuarioRepository.findByEmail(request.email()).isPresent()) {
-            throw new RuntimeException("El email ya está registrado");
-        }
-        Rol rol = rolRepository.findByNombre(request.role())
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado: " + request.role()));
+        String token = UUID.randomUUID().toString(); // Generamos el token
 
+        Rol rol = rolRepository.findByNombre("ROLE_USER")
+                .orElseThrow(() -> new IllegalStateException("Rol no encontrado"));
+        // Guardamos en la BD usando tu procedimiento
         usuarioRepository.addNewUser(
-            request.name(),
-            request.apellidoPat(),
-            request.apellidoMat(),
-            request.email(),
-            passwordEncoder.encode(request.password()),
-            rol.getId(),
-            false,
-            null
+            request.name(), request.apellidoPat(), request.apellidoMat(),
+            request.email(), passwordEncoder.encode(request.password()),
+            rol.getId(), true, token 
         );
 
-        Usuario user = usuarioRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("Error al recuperar el usuario creado"));
+        // Llamamos al método (esto quita el error rojo)
+        enviarEmailVerificacion(request.email(), token);
 
-        var jwtToken = jwtService.generateToken(user);
-        var refreshToken = jwtService.generateRefreshToken(user);
-        saveUserToken(user, jwtToken);
+        return new TokenResponse("PENDIENTE_VERIFICACION", null);
+    }
 
-        return new TokenResponse(jwtToken, refreshToken);
+    private void enviarEmailVerificacion(String email, String token) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("Verifica tu cuenta");
+        message.setText("Haz clic aquí: http://localhost:7890/auth/verify?token=" + token);
+        mailSender.send(message);
     }
 
     public TokenResponse login(LoginRequest request) {

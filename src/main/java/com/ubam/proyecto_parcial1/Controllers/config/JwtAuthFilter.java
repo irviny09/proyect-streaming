@@ -51,10 +51,19 @@ protected boolean shouldNotFilter(HttpServletRequest request) throws ServletExce
         @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
+        if (request.getServletPath().contains("/auth/verify")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         String jwtToken = null;
         String userEmail = null;
 
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (request.getServletPath().contains("/auth")) {
+        filterChain.doFilter(request, response);
+        return;
+        }
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwtToken = authHeader.substring(7);
