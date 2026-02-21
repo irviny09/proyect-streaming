@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.http.HttpHeaders;
 
 
 @RestController
@@ -30,9 +32,9 @@ public class AuthController {
         final TokenResponse token = service.login(request);
         return ResponseEntity.ok(token);
     }
-    //@PostMapping("/refresh")
-    //public ResponseEntity<TokenResponse> refreshToken(@RequestHeader(HttpHeaders.AUTHORIZATION) final String authHeader) {
-    //    return service.refreshToken(authHeader);
-    //}
+    @PostMapping("/refresh")
+    public TokenResponse refreshToken(@RequestHeader(HttpHeaders.AUTHORIZATION) final String authHeader) {
+        return service.refreshToken(authHeader);
+    }
     
 }

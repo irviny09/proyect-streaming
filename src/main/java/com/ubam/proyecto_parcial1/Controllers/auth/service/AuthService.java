@@ -2,6 +2,7 @@ package com.ubam.proyecto_parcial1.Controllers.auth.service;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -59,11 +60,47 @@ public class AuthService {
     }
 
     public TokenResponse login(LoginRequest request) {
-        return null;
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                request.email(),
+                request.password()
+            )
+        );
+
+        var user = usuarioRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        var jwtToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
+        revokeAllUserTokens(user);
+        saveUserToken(user, jwtToken);
+        return new TokenResponse(jwtToken, refreshToken);
     }
-    public TokenResponse refreshToken(String authHeader) {
-        // Lógica de refresh aquí
-        return null;
+
+    public TokenResponse refreshToken(final String authHeader) {
+        if(authHeader == null || !authHeader.startsWith("Bearer")){
+            throw new IllegalArgumentException("Token invalido");
+        }
+
+
+        final String refreshToken = authHeader.substring(7);
+        final String userEmail = jwtService.extractUsername(refreshToken);
+
+        if(userEmail == null){
+            throw new IllegalArgumentException("Invalid Refresh Token");
+        }
+
+        final Usuario usuario = usuarioRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException(userEmail));
+
+        if(!jwtService.isTokenValid(refreshToken, usuario)){
+            throw new IllegalArgumentException("Invalid Refresh Token");
+        }
+
+        final String accesToken = jwtService.generateToken(usuario);
+        revokeAllUserTokens(usuario);
+        saveUserToken(usuario, accesToken);
+        return new TokenResponse(accesToken, refreshToken);
     }
 
     private void saveUserToken(Usuario usuario , String jwtToken){
