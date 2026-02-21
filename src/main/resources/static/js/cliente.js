@@ -1,5 +1,6 @@
 const mostrarURL = "http://localhost:7890/api/operacional/mostrar";
 const movieBody = document.getElementById("movieBody");
+const btnSalir = document.getElementById("btnSalir");
 
 const cargarPeliculas = async () => {
     movieBody.innerHTML = ""; 
@@ -59,4 +60,22 @@ const abrirTrailer = (url, nombre) => {
     modal.show();
 };
 
+const logout = async () => {
+    const token = localStorage.getItem("access_token"); 
+
+    try {
+        await fetch("http://localhost:7890/auth/logout", {
+            method: "POST"
+        });
+    }finally {
+        document.cookie = "access_token=; expores: Thu, 01 Jan 1970 00:00:00 UTC";
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = "/";
+    }
+};
+
+// Asignar al botón de Salir de tu HTML
+document.querySelector(".btn-primary").addEventListener("click", logout);
+btnSalir.addEventListener("click" , logout);
 document.addEventListener("DOMContentLoaded", cargarPeliculas);

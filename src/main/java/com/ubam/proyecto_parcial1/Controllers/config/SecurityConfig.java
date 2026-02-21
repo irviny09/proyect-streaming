@@ -23,6 +23,7 @@ import org.springframework.http.HttpMethod;
 
 import com.ubam.proyecto_parcial1.Controllers.auth.repository.TokenRepository;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -38,7 +39,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*")); // En producción pon tu dominio real
+        configuration.setAllowedOrigins(Arrays.asList("*")); 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -73,10 +74,13 @@ public class SecurityConfig {
                             final var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
                             logout(authHeader);
                         })
-                        .logoutSuccessHandler((request, response, authentication) ->
-                            SecurityContextHolder.clearContext())
-                        
-            );
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            SecurityContextHolder.clearContext();
+                            response.setStatus(HttpServletResponse.SC_OK);
+                        })
+                        .deleteCookies("access_token")
+                        .invalidateHttpSession(true)
+                );
 
         return http.build();
     }
