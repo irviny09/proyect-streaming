@@ -61,6 +61,9 @@ public class Usuario implements UserDetails {
     @OneToMany(mappedBy = "usuario")
     private List<Token> tokens;
 
+    @Column(name = "Usuario_TokenVerificacion", length = 100)
+    private String tokenVerificacion;
+
     // --- MÉTODOS OBLIGATORIOS DE USERDETAILS ---
 
     @Override
@@ -101,5 +104,13 @@ public class Usuario implements UserDetails {
     public boolean isEnabled() {
         // Usa tu campo 'activo' de la base de datos
         return activo;
+    }
+
+    public boolean isVerificado(boolean verificado){
+        return verificado;
+    }
+
+    public void setVerificado(boolean verificado){
+        this.activo = verificado;
     }
 }

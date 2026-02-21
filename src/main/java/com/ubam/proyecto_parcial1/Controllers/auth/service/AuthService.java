@@ -11,6 +11,7 @@ import com.ubam.proyecto_parcial1.Controllers.auth.controller.RegisterRequest;
 import com.ubam.proyecto_parcial1.Controllers.auth.controller.TokenResponse;
 import com.ubam.proyecto_parcial1.Controllers.auth.repository.Token;
 import com.ubam.proyecto_parcial1.Controllers.auth.repository.TokenRepository;
+import com.ubam.proyecto_parcial1.Models.Rol;
 import com.ubam.proyecto_parcial1.Models.Usuario;
 import com.ubam.proyecto_parcial1.Repository.RolRepository;
 import com.ubam.proyecto_parcial1.Repository.UsuarioRepository;
@@ -29,29 +30,26 @@ public class AuthService {
     
 
     public TokenResponse register(RegisterRequest request) {
-        // 1. Verificar si el usuario ya existe antes de llamar al SP
         if (usuarioRepository.findByEmail(request.email()).isPresent()) {
             throw new RuntimeException("El email ya está registrado");
         }
+        Rol rol = rolRepository.findByNombre(request.role())
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado: " + request.role()));
 
-        // 2. Llamar al procedimiento almacenado
-        rolRepository.findByNombre(request.role()).ifPresent(rol -> {
-            usuarioRepository.addNewUser(
-                request.name(),
-                request.apellidoPat(),
-                request.apellidoMat(),
-                request.email(),
-                passwordEncoder.encode(request.password()),
-                rol.getId(),
-                true
-            );
-        });
+        usuarioRepository.addNewUser(
+            request.name(),
+            request.apellidoPat(),
+            request.apellidoMat(),
+            request.email(),
+            passwordEncoder.encode(request.password()),
+            rol.getId(),
+            false,
+            null
+        );
 
-        // 3. Recuperar al usuario recién creado
-        var user = usuarioRepository.findByEmail(request.email())
+        Usuario user = usuarioRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("Error al recuperar el usuario creado"));
 
-        // 4. Generar y guardar tokens
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
         saveUserToken(user, jwtToken);

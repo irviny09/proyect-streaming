@@ -19,6 +19,8 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 import java.util.Arrays;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+
 import com.ubam.proyecto_parcial1.Controllers.auth.repository.TokenRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -50,10 +52,13 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable) 
             .authorizeHttpRequests(req ->
-                req.requestMatchers("/auth/**").permitAll()           
-                    .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/img/**").permitAll()
-                    .requestMatchers("/admin").hasAuthority("ROLE_ADMIN")
-                    .requestMatchers("/user").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
+                req.requestMatchers("/auth/**","/", "/index.html" , "/css/**", "/js/**", "/img/**").permitAll()    
+
+                    .requestMatchers(HttpMethod.GET, "/api/operacional/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/operacional/**").hasAuthority("ROLE_ADMIN")
+
+                    .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
+                    .requestMatchers("/user/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                     .anyRequest()
                     .authenticated()
                     
